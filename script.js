@@ -36,6 +36,12 @@ dateInput.setAttribute('aria-label', 'Дата добавления задачи
 const addButton = createElement('button', 'button button--primary', 'Добавить');
 addButton.type = 'submit';
 
+function formatDate(isoDate) {
+    if (!isoDate) return 'без даты';
+    const [year, month, day] = isoDate.split('-');
+    return `${day}.${month}.${year}`;
+  }
+
 form.append(titleInput, dateInput, addButton);
 addSection.append(form);
 
@@ -77,3 +83,52 @@ const counter = createElement('p', 'footer__counter');
 footer.append(counter);
 
 document.body.append(header, main, footer);
+
+
+
+function render() {
+    list.innerHTML = '';
+  
+    tasks.forEach((task) => list.append(createTaskElement(task)));
+  
+    emptyMessage.textContent = tasks.length === 0 ? 'Задач пока нет, добавьте первую' : '';
+  
+    const doneCount = tasks.filter((task) => task.done).length;
+    counter.textContent = `Всего: ${tasks.length} · Выполнено: ${doneCount}`;
+  }
+  
+
+  function createTaskElement(task) {
+    const item = createElement('li', 'task-item');
+    item.dataset.id = task.id;
+  
+    const checkbox = createElement('input', 'task-item__checkbox');
+    checkbox.type = 'checkbox';
+    checkbox.checked = task.done;
+    checkbox.setAttribute('aria-label', 'Отметить как выполненную');
+  
+    const info = createElement('div', 'task-item__info');
+    const titleElement = createElement('span', 'task-item__title', task.title);
+    const dateElement = createElement('time', 'task-item__date', formatDate(task.date));
+    dateElement.dateTime = task.date;
+    info.append(titleElement, dateElement);
+  
+    const actions = createElement('div', 'task-item__actions');
+  
+    const editButton = createElement('button', 'button button--icon', '✎');
+    editButton.type = 'button';
+    editButton.title = 'Редактировать';
+    editButton.setAttribute('aria-label', 'Редактировать');
+  
+    const deleteButton = createElement('button', 'button button--icon button--danger', '✕');
+    deleteButton.type = 'button';
+    deleteButton.title = 'Удалить';
+    deleteButton.setAttribute('aria-label', 'Удалить');
+  
+    actions.append(editButton, deleteButton);
+    item.append(checkbox, info, actions);
+  
+    return item;
+  }
+
+  render();
