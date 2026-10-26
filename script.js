@@ -5,12 +5,25 @@ link.rel = 'stylesheet';
 link.href = 'style.css';
 document.head.append(link);
 
-let tasks = [
-  { id: 1, title: 'Пример: сделать лабу', date: '2026-10-25', done: false },
-  { id: 2, title: 'Пример: купить хлеб', date: '2026-10-22', done: true },
-];
+const STORAGE_KEY = 'todo-tasks';
+
+let tasks = []; 
 
 let editingId = null;
+let search = '';  
+
+function saveTasks() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+}
+
+function loadTasks() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    tasks = Array.isArray(saved) ? saved : [];
+  } catch {
+    tasks = [];
+  }
+}
 
 function createElement(tag, className, text) {
   const element = document.createElement(tag);
@@ -92,15 +105,27 @@ footer.append(counter);
 
 document.body.append(header, main, footer);
 
+function getVisibleTasks() {
+  const query = search.trim().toLowerCase();
+  return tasks.filter((task) => task.title.toLowerCase().includes(query));
+}
+
 function render() {
   list.innerHTML = '';
 
-  tasks.forEach((task) => list.append(createTaskElement(task)));
+  const visibleTasks = getVisibleTasks();
+  visibleTasks.forEach((task) => list.append(createTaskElement(task)));
 
-  emptyMessage.textContent = tasks.length === 0 ? 'Задач пока нет — добавьте первую!' : '';
+  if (tasks.length === 0) {
+    emptyMessage.textContent = 'Задач пока нет — добавьте первую!';
+  } else if (visibleTasks.length === 0) {
+    emptyMessage.textContent = 'Ничего не найдено';
+  } else {
+    emptyMessage.textContent = '';
+  }
 
   const doneCount = tasks.filter((task) => task.done).length;
-  counter.textContent = `Всего: ${tasks.length} · Выполнено: ${doneCount}`;
+  counter.textContent = `Всего: ${tasks.length} /  Выполнено: ${doneCount}`;
 }
 
 function createTaskElement(task) {
@@ -189,17 +214,20 @@ function addTask(title, date) {
     date: date,
     done: false,
   });
+  saveTasks();
   render();
 }
 
 function deleteTask(id) {
   tasks = tasks.filter((task) => task.id !== id);
+  saveTasks();
   render();
 }
 
 function toggleTask(id) {
   const task = tasks.find((task) => task.id === id);
   task.done = !task.done;
+  saveTasks();
   render();
 }
 
@@ -217,6 +245,7 @@ function updateTask(id, newTitle, newDate) {
   task.title = title;
   task.date = newDate;
   editingId = null;
+  saveTasks();
   render();
 }
 
@@ -230,4 +259,10 @@ form.addEventListener('submit', (event) => {
   titleInput.focus();
 });
 
+searchInput.addEventListener('input', () => {
+  search = searchInput.value;
+  render();
+});
+
+loadTasks();
 render();
