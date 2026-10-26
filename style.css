@@ -181,6 +181,23 @@
     opacity: 0.6;
   }
 
+  .task-item--draggable {
+    cursor: grab;
+  }
+  
+  .task-item--dragging {
+    opacity: 0.4;
+  }
+  
+  .task-item--over {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 2px var(--color-accent);
+  }
+  
+  .task-list--dragging .task-item * {
+    pointer-events: none;
+  }
+
   .task-item--editing {
     display: block;
   }

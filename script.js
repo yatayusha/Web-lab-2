@@ -12,7 +12,8 @@ let tasks = [];
 let editingId = null;
 let search = '';
 let filter = 'all'; 
-let sortAsc = true; 
+let sortAsc = true;
+let draggedId = null; 
 
 function saveTasks() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
@@ -87,7 +88,7 @@ filterOptions.forEach(([value, text]) => {
   filterSelect.append(option);
 });
 
-const sortButton = createElement('button', 'button', 'Сортировать по дате ↑');
+const sortButton = createElement('button', 'button', 'Сортировать по дате (от старой к новой)');
 sortButton.type = 'button';
 
 controls.append(searchInput, filterSelect, sortButton);
@@ -116,6 +117,10 @@ function getVisibleTasks() {
     return task.title.toLowerCase().includes(query);
   });
 
+}
+
+function isDragEnabled() {
+  return filter === 'all' && search.trim() === '' && editingId === null;
 }
 
 function render() {
@@ -176,6 +181,12 @@ function createTaskElement(task) {
 
   actions.append(editButton, deleteButton);
   item.append(checkbox, info, actions);
+
+  if (isDragEnabled()) {
+    item.draggable = true;
+    item.classList.add('task-item--draggable');
+    addDragHandlers(item);
+  }
 
   return item;
 }
@@ -268,6 +279,52 @@ function sortByDate() {
   render();
 }
 
+function addDragHandlers(item) {
+  item.addEventListener('dragstart', (event) => {
+    draggedId = Number(item.dataset.id);
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', item.dataset.id);
+    item.classList.add('task-item--dragging');
+    list.classList.add('task-list--dragging');
+  });
+
+  item.addEventListener('dragend', () => {
+    draggedId = null;
+    item.classList.remove('task-item--dragging');
+    list.classList.remove('task-list--dragging');
+  });
+
+  item.addEventListener('dragover', (event) => {
+    event.preventDefault(); 
+    if (Number(item.dataset.id) !== draggedId) {
+      item.classList.add('task-item--over');
+    }
+  });
+
+  item.addEventListener('dragleave', () => {
+    item.classList.remove('task-item--over');
+  });
+
+  item.addEventListener('drop', (event) => {
+    event.preventDefault();
+    item.classList.remove('task-item--over');
+    moveTask(draggedId, Number(item.dataset.id));
+  });
+}
+
+function moveTask(fromId, toId) {
+  if (fromId === null || fromId === toId) return;
+
+  const fromIndex = tasks.findIndex((task) => task.id === fromId);
+  const toIndex = tasks.findIndex((task) => task.id === toId);
+
+  const [movedTask] = tasks.splice(fromIndex, 1);
+  tasks.splice(toIndex, 0, movedTask);          
+
+  saveTasks();
+  render();
+}
+
 form.addEventListener('submit', (event) => {
   event.preventDefault();
   const title = titleInput.value.trim();
@@ -287,6 +344,8 @@ filterSelect.addEventListener('change', () => {
   filter = filterSelect.value;
   render();
 });
+
+sortButton.addEventListener('click', sortByDate);
 
 loadTasks();
 render();
