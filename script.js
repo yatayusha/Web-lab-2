@@ -10,6 +10,8 @@ let tasks = [
   { id: 2, title: 'Пример: купить хлеб', date: '2026-10-22', done: true },
 ];
 
+let editingId = null;
+
 function createElement(tag, className, text) {
   const element = document.createElement(tag);
   if (className) element.className = className;
@@ -105,10 +107,19 @@ function createTaskElement(task) {
   const item = createElement('li', 'task-item');
   item.dataset.id = task.id;
 
+  if (task.id === editingId) {
+    item.classList.add('task-item--editing');
+    item.append(createEditForm(task));
+    return item;
+  }
+
+  if (task.done) item.classList.add('task-item--done');
+
   const checkbox = createElement('input', 'task-item__checkbox');
   checkbox.type = 'checkbox';
   checkbox.checked = task.done;
   checkbox.setAttribute('aria-label', 'Отметить как выполненную');
+  checkbox.addEventListener('change', () => toggleTask(task.id));
 
   const info = createElement('div', 'task-item__info');
   const titleElement = createElement('span', 'task-item__title', task.title);
@@ -122,16 +133,53 @@ function createTaskElement(task) {
   editButton.type = 'button';
   editButton.title = 'Редактировать';
   editButton.setAttribute('aria-label', 'Редактировать');
+  editButton.addEventListener('click', () => startEdit(task.id));
 
   const deleteButton = createElement('button', 'button button--icon button--danger', '✕');
   deleteButton.type = 'button';
   deleteButton.title = 'Удалить';
   deleteButton.setAttribute('aria-label', 'Удалить');
+  deleteButton.addEventListener('click', () => deleteTask(task.id));
 
   actions.append(editButton, deleteButton);
   item.append(checkbox, info, actions);
 
   return item;
+}
+
+function createEditForm(task) {
+  const editForm = createElement('form', 'task-edit');
+
+  const editTitle = createElement('input', 'input task-edit__title');
+  editTitle.type = 'text';
+  editTitle.value = task.title;
+  editTitle.required = true;
+  editTitle.maxLength = 100;
+  editTitle.setAttribute('aria-label', 'Новое название');
+
+  const editDate = createElement('input', 'input task-edit__date');
+  editDate.type = 'date';
+  editDate.value = task.date;
+  editDate.required = true;
+  editDate.setAttribute('aria-label', 'Новая дата');
+
+  const saveButton = createElement('button', 'button button--primary', 'Сохранить');
+  saveButton.type = 'submit';
+
+  const cancelButton = createElement('button', 'button', 'Отмена');
+  cancelButton.type = 'button';
+  cancelButton.addEventListener('click', () => {
+    editingId = null;
+    render();
+  });
+
+  editForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    updateTask(task.id, editTitle.value, editDate.value);
+  });
+
+  editForm.append(editTitle, editDate, saveButton, cancelButton);
+  return editForm;
 }
 
 function addTask(title, date) {
@@ -141,6 +189,34 @@ function addTask(title, date) {
     date: date,
     done: false,
   });
+  render();
+}
+
+function deleteTask(id) {
+  tasks = tasks.filter((task) => task.id !== id);
+  render();
+}
+
+function toggleTask(id) {
+  const task = tasks.find((task) => task.id === id);
+  task.done = !task.done;
+  render();
+}
+
+function startEdit(id) {
+  editingId = id;
+  render();
+  list.querySelector('.task-edit__title').focus();
+}
+
+function updateTask(id, newTitle, newDate) {
+  const title = newTitle.trim();
+  if (!title) return;
+
+  const task = tasks.find((task) => task.id === id);
+  task.title = title;
+  task.date = newDate;
+  editingId = null;
   render();
 }
 
