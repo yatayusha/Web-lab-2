@@ -10,7 +10,8 @@ const STORAGE_KEY = 'todo-tasks';
 let tasks = []; 
 
 let editingId = null;
-let search = '';  
+let search = '';
+let filter = 'all'; 
 
 function saveTasks() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
@@ -107,7 +108,13 @@ document.body.append(header, main, footer);
 
 function getVisibleTasks() {
   const query = search.trim().toLowerCase();
-  return tasks.filter((task) => task.title.toLowerCase().includes(query));
+
+  return tasks.filter((task) => {
+    if (filter === 'done' && !task.done) return false;
+    if (filter === 'active' && task.done) return false;
+    return task.title.toLowerCase().includes(query);
+  });
+
 }
 
 function render() {
@@ -261,6 +268,11 @@ form.addEventListener('submit', (event) => {
 
 searchInput.addEventListener('input', () => {
   search = searchInput.value;
+  render();
+});
+
+filterSelect.addEventListener('change', () => {
+  filter = filterSelect.value;
   render();
 });
 
