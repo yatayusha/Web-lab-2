@@ -12,6 +12,7 @@ let tasks = [];
 let editingId = null;
 let search = '';
 let filter = 'all'; 
+let sortAsc = true; 
 
 function saveTasks() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
@@ -252,6 +253,17 @@ function updateTask(id, newTitle, newDate) {
   task.title = title;
   task.date = newDate;
   editingId = null;
+  saveTasks();
+  render();
+}
+
+function sortByDate() {
+  tasks.sort((a, b) => {
+    const difference = new Date(a.date) - new Date(b.date);
+    return sortAsc ? difference : -difference;
+  });
+  sortAsc = !sortAsc;
+  sortButton.textContent = sortAsc ? 'Сортировать по дате (от старой к новой)' : 'Сортировать по дате (от новой к старой)';
   saveTasks();
   render();
 }
