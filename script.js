@@ -274,7 +274,7 @@ function sortByDate() {
     return sortAsc ? difference : -difference;
   });
   sortAsc = !sortAsc;
-  sortButton.textContent = sortAsc ? 'Сортировать по дате (от старой к новой)' : 'Сортировать по дате (от новой к старой)';
+  sortButton.textContent = sortAsc ? 'Сортировать по дате (от новой к старой)' : 'Сортировать по дате (от старой к новой)';
   saveTasks();
   render();
 }
